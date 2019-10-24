@@ -7,12 +7,18 @@
   <style>
     h2 { font-family: 'Hind', sans-serif; font-size: 5vw; margin: 0; padding: 0; }
     p { margin: 0; padding: 0; }
-    body { font-family: 'Open Sans', sans-serif; font-size: 4vw; color: white; }
+    body { font-family: 'Open Sans', sans-serif; font-size: 4vw; color: white; height: 100%; }
+    .parent-container {
+      height: 100%;
+      /* vertical-align: bottom; */
+    }
     .translucent-bg {
       visibility: hidden;
       padding: 1vw;
       border-radius: 2px;
       background: rgba( 0, 0, 0, 0.5 );
+      position: fixed;
+      width: 100%;
     }
     .chat-badges {
       padding: 0.5vw;
@@ -24,39 +30,19 @@
 </head>
 
 <body>
-  <div id="highlight-container" class="translucent-bg"><h2><span id="badges"></span> <span id="username"></span></h2><p id="text"></p></div>
+  <div id="parent-container" class="parent-container">
+    <div id="highlight-container" class="translucent-bg"><h2><span id="badges"></span> <span id="username"></span></h2><p id="text"></p></div>
+  </div>
+  <audio id="audio" controls="" style="visibility: hidden;">
+    <source id="source" type="audio/wav">
+  </audio>
   <script>
-    const params = new URLSearchParams(location.search);
-    var bttvEmotes = [];
+    const params = new URLSearchParams( location.search );
+    var isTTSEnabled = params.get( "tts" ) || false;
+    var ttsVoice = params.get( "voice" ) || "Brian";
+    var alignBottom = params.get( "bottom" ) || false;
     var messageId = "";
     var cooldownTimer = null;
-    // Fetches global bttv emotes
-    fetch('https://api.betterttv.net/2/emotes')
-      .then(response => {
-        return response.json()
-      })
-      .then(data => {
-        bttvEmotes = data.emotes
-      })
-      .catch(err => {
-        console.error(err)
-      })
-
-    // Fecthes Channel specific bttv emotes
-    fetch(`https://api.betterttv.net/2/channels/${params.get("channel")}`)
-      .then(response => {
-        return response.json()
-      })
-      .then(data => {
-        data.emotes.forEach(emotePush)
-        function emotePush(emote) {
-          bttvEmotes.push(emote)
-        }
-      })
-      .catch(err => {
-        console.error(err)
-      })
-
     var badgeSets = {};
     function loadBadgeSet( id ) {
     	fetch("https://badges.twitch.tv/v1/badges/global/display?language=en")
@@ -142,37 +128,7 @@
     	}
     }
 
-    function highlightThisMessage( user, message, extra ) {
-      // var parsed = message.split(' ');
-      // var bttvE = [];
-      // var randHTML = [];
-      // parsed.forEach( parseEm );
-      // function parseEm( message ) {
-      //   function btCode( emote ) {
-      //     return emote.code === message
-      //   }
-      //   var emFind = bttvEmotes.find(btCode)
-      //   if (emFind) {
-      //     bttvE.push( emFind.id );
-      //   }
-      // }
-      // if( bttvE.length > 0 ) {
-      //   var emoteId = bttvE[Math.floor(Math.random() * bttvE.length)];
-      //   randHTML.push(`<img height="320" src="https://cdn.betterttv.net/emote/${emoteId}/3x"/>`);
-      // }
-      //
-      // if( extra.messageEmotes ) {
-      //   var emotes = Object.keys( extra.messageEmotes );
-      //   var emoteId = emotes[Math.floor(Math.random() * emotes.length)];
-      //   randHTML.push(`<img height="320" src="https://static-cdn.jtvnw.net/emoticons/v1/${emoteId}/3.0"/>`);
-      // }
-      //
-      // // Pick random emote html if message includes both twitch and bttv emotes
-      // if (randHTML.length > 0) {
-      //   document.querySelector("#text").innerHTML = randHTML[Math.floor(Math.random() * randHTML.length)]
-      //   randHTML = []
-      // }
-
+    async function highlightThisMessage( user, message, extra ) {
       messageId = extra.id;
 
       var badges = document.createElement("span");
@@ -194,6 +150,26 @@
       cooldownTimer = setTimeout( () => {
         document.querySelector( "#highlight-container" ).style.visibility = "hidden";
       }, 30000 );
+      if( alignBottom ) {
+        document.querySelector( "#highlight-container" ).style.bottom = "0px";
+      }
+
+      if( isTTSEnabled ) {
+        let speak = await fetch( `https://api.streamelements.com/kappa/v2/speech?voice=${ttsVoice}&text=` + encodeURIComponent( message.trim() ) );
+      	if( speak.status != 200 ) {
+      		// await speak.text();
+      		return;
+      	}
+
+        let mp3 = await speak.blob();
+        let blobUrl = URL.createObjectURL( mp3 );
+      	document.getElementById( "source" ).setAttribute( "src", blobUrl );
+      	let audio = document.getElementById( "audio" );
+      	audio.pause();
+      	audio.load();
+        audio.volume = 1;
+      	audio.play();
+      }
     }
 
     ComfyJS.onMessageDeleted = ( id, extra ) => {
