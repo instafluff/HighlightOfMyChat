@@ -1,0 +1,228 @@
+<html>
+
+<head>
+  <title>Highlighted Messages on Stream!</title>
+  <script src="web/comfy.min.js"></script>
+  <link href="https://fonts.googleapis.com/css?family=Hind|Open+Sans&display=swap" rel="stylesheet">
+  <style>
+    h2 { font-family: 'Hind', sans-serif; font-size: 5vw; margin: 0; padding: 0; }
+    p { margin: 0; padding: 0; }
+    body { font-family: 'Open Sans', sans-serif; font-size: 4vw; color: white; }
+    .translucent-bg {
+      visibility: hidden;
+      padding: 1vw;
+      border-radius: 2px;
+      background: rgba( 0, 0, 0, 0.5 );
+    }
+    .chat-badges {
+      padding: 0.5vw;
+    }
+    .chat-badge {
+      padding: 0.5vw;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="highlight-container" class="translucent-bg"><h2><span id="badges"></span> <span id="username"></span></h2><p id="text"></p></div>
+  <script>
+    const params = new URLSearchParams(location.search);
+    var bttvEmotes = [];
+    var messageId = "";
+    var cooldownTimer = null;
+    // Fetches global bttv emotes
+    fetch('https://api.betterttv.net/2/emotes')
+      .then(response => {
+        return response.json()
+      })
+      .then(data => {
+        bttvEmotes = data.emotes
+      })
+      .catch(err => {
+        console.error(err)
+      })
+
+    // Fecthes Channel specific bttv emotes
+    fetch(`https://api.betterttv.net/2/channels/${params.get("channel")}`)
+      .then(response => {
+        return response.json()
+      })
+      .then(data => {
+        data.emotes.forEach(emotePush)
+        function emotePush(emote) {
+          bttvEmotes.push(emote)
+        }
+      })
+      .catch(err => {
+        console.error(err)
+      })
+
+    var badgeSets = {};
+    function loadBadgeSet( id ) {
+    	fetch("https://badges.twitch.tv/v1/badges/global/display?language=en")
+      .then( r => r.json() )
+      .then( function( data ) {
+    		if( data ) {
+    			badgeSets = Object.assign( badgeSets, data.badge_sets || {} );
+    			fetch( "https://badges.twitch.tv/v1/badges/channels/" + id + "/display?language=en" )
+          .then( r => r.json() )
+          .then( function( data ) {
+    				if( data ) {
+    					// Merge the sets together
+    					Object.keys( data.badge_sets || {} ).forEach( k => {
+    						if( badgeSets[ k ].versions ) {
+    							badgeSets[ k ].versions = Object.assign( badgeSets[ k ].versions, data.badge_sets[ k ].versions );
+    						}
+    						else {
+    							badgeSets[ k ] = data.badge_sets[ k ];
+    						}
+    					});
+    				}
+    			});
+    		}
+    	});
+    }
+
+    function htmlEntities(html) {
+    	function it() {
+    		return html.map( function( n, i, arr ) {
+    			if( n.length == 1 ) {
+    				return n.replace(/[\u00A0-\u9999<>\&]/gim, function(i) {
+    					return '&#'+i.charCodeAt(0)+';';
+    				});
+    			}
+    			return n;
+    		});
+    	}
+    	var isArray = Array.isArray(html);
+    	if( !isArray ) {
+    		html = html.split('');
+    	}
+    	html = it(html);
+    	if( !isArray ) {
+    		html = html.join('');
+    	}
+    	return html;
+    }
+
+    function formatEmotes(text, emotes) {
+    	var splitText = text.split('');
+    	for( var i in emotes ) {
+    		var e = emotes[i];
+    		for( var j in e ) {
+    			var mote = e[j];
+    			if(typeof mote == 'string') {
+    				mote = mote.split('-');
+    				mote = [parseInt(mote[0]), parseInt(mote[1])];
+    				var length = mote[1] - mote[0];
+    				var empty = Array.apply(null, new Array(length + 1)).map(function() { return '' });
+    				splitText = splitText.slice(0, mote[0]).concat(empty).concat(splitText.slice(mote[1] + 1, splitText.length));
+    				splitText.splice(mote[0], 1, '<img class="chat-message-emote" src="http://static-cdn.jtvnw.net/emoticons/v1/' + i + '/1.0" srcset="https://static-cdn.jtvnw.net/emoticons/v1/' + i + '/1.0 1x,https://static-cdn.jtvnw.net/emoticons/v1/' + i + '/2.0 2x,https://static-cdn.jtvnw.net/emoticons/v1/' + i + '/3.0 4x">');
+    			}
+    		}
+    	}
+    	return htmlEntities(splitText).join('')
+    }
+
+    function createBadgeFromRole( name, version ) {
+    	try {
+    		var badge = document.createElement("img");
+    		badge.className = "chat-badge";
+    		if( badgeSets[ name ] ) {
+    			var badgeImage = badgeSets[ name ].versions[ version ];
+    			badge.setAttribute( "src", badgeImage.image_url_1x );
+    			badge.setAttribute( "srcset", `${badgeImage.image_url_1x} 1x, ${badgeImage.image_url_2x} 2x, ${badgeImage.image_url_4x} 4x` );
+    			badge.setAttribute( "alt", badgeImage.title );
+    		}
+    		return badge;
+    	}
+    	catch( ex ) {
+    		console.log( "Error parsing badge role", name, version );
+    		return document.createElement("img");
+    	}
+    }
+
+    function highlightThisMessage( user, message, extra ) {
+      // var parsed = message.split(' ');
+      // var bttvE = [];
+      // var randHTML = [];
+      // parsed.forEach( parseEm );
+      // function parseEm( message ) {
+      //   function btCode( emote ) {
+      //     return emote.code === message
+      //   }
+      //   var emFind = bttvEmotes.find(btCode)
+      //   if (emFind) {
+      //     bttvE.push( emFind.id );
+      //   }
+      // }
+      // if( bttvE.length > 0 ) {
+      //   var emoteId = bttvE[Math.floor(Math.random() * bttvE.length)];
+      //   randHTML.push(`<img height="320" src="https://cdn.betterttv.net/emote/${emoteId}/3x"/>`);
+      // }
+      //
+      // if( extra.messageEmotes ) {
+      //   var emotes = Object.keys( extra.messageEmotes );
+      //   var emoteId = emotes[Math.floor(Math.random() * emotes.length)];
+      //   randHTML.push(`<img height="320" src="https://static-cdn.jtvnw.net/emoticons/v1/${emoteId}/3.0"/>`);
+      // }
+      //
+      // // Pick random emote html if message includes both twitch and bttv emotes
+      // if (randHTML.length > 0) {
+      //   document.querySelector("#text").innerHTML = randHTML[Math.floor(Math.random() * randHTML.length)]
+      //   randHTML = []
+      // }
+
+      messageId = extra.id;
+
+      var badges = document.createElement("span");
+    	badges.className = "chat-badges";
+    	// Add badges based on type
+    	if( extra[ "userBadges" ] ) {
+    		Object.keys( extra[ "userBadges" ] ).forEach( x => {
+    			badges.appendChild( createBadgeFromRole( x, extra[ "userBadges" ][ x ] ) );
+    		});
+    	}
+    	document.querySelector( "#badges" ).innerHTML = badges.innerHTML;
+      document.querySelector( "#username" ).innerText = user;
+      document.querySelector( "#username" ).style.color = extra.userColor;
+      document.querySelector( "#text" ).innerHTML = formatEmotes( message, extra.messageEmotes );
+      if( cooldownTimer ) {
+        clearTimeout( cooldownTimer );
+      }
+      document.querySelector( "#highlight-container" ).style.visibility = "visible";
+      cooldownTimer = setTimeout( () => {
+        document.querySelector( "#highlight-container" ).style.visibility = "hidden";
+      }, 30000 );
+    }
+
+    ComfyJS.onMessageDeleted = ( id, extra ) => {
+      if( id === messageId ) {
+        // DELETE THE HIGHLIGHTED MESSAGE
+        document.querySelector( "#highlight-container" ).style.visibility = "hidden";
+      }
+    };
+
+    ComfyJS.onChat = ( user, message, flags, self, extra ) => {
+      if( flags.highlighted ) {
+        highlightThisMessage( user, message, extra );
+      }
+    };
+    ComfyJS.onCommand = ( user, command, message, flags, extra ) => {
+      if( flags.highlighted ) {
+        highlightThisMessage( user, "!" + command + " " + message, extra );
+      }
+    };
+    ComfyJS.Init( params.get( "channel" ) );
+    fetch( "https://api.twitch.tv/helix/users?login=" + params.get( "channel" ), {
+      headers: {
+        "Client-ID": "2odsv8xermvalbub7wipebrphqlpqv"
+      }
+    } ).then( r => r.json() )
+    .then( data => {
+      loadBadgeSet( data.data[ 0 ].id );
+    });
+  </script>
+</body>
+
+</html>
