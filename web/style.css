@@ -1,0 +1,38 @@
+h2 {
+  font-family: 'Hind', sans-serif;
+  font-size: 5vw;
+}
+
+h2, p {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 4vw;
+  color: white;
+  height: 100%;
+}
+
+.parent-container {
+  height: 100%;
+  /* vertical-align: bottom; */
+}
+
+.translucent-bg {
+  visibility: hidden;
+  padding: 1vw;
+  border-radius: 2px;
+  background: rgba( 0, 0, 0, 0.5);
+  position: fixed;
+  width: 100%;
+}
+
+.chat-badge-items {
+  padding: 0.5vw;
+}
+
+.chat-badge {
+  padding: 0.5vw;
+}
