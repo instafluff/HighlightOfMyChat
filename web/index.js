@@ -35,7 +35,7 @@ function loadBadgeSet( id ) {
     }
     // Merge the sets together
     Object.keys( channelBadges.badge_sets || {} ).forEach( k => {
-      if( !badgeSets[ k ].versions ) {
+      if( badgeSets[ k ].versions ) {
         Object.assign(
           badgeSets[ k ].versions,
           channelBadges.badge_sets[ k ].versions
