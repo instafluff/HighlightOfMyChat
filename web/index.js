@@ -135,7 +135,7 @@ async function highlightThisMessage( user, message, extra ) {
       voice: ttsVoice,
       text: message.trim()
     } );
-    const speak = await fetch( `${ TTS_BASE }?${ qd }` );
+    const speak = await fetch( `${ TTS_BASE }?${ qs }` );
     if( speak.status != 200 ) {
       // await speak.text();
       return;
