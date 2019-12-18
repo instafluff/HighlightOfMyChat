@@ -12,8 +12,6 @@ We built this Stream Overlay to display Highlighted Message Twitch Channel Rewar
 
 > https://twitch.tv/instafluff
 
-> https://twitter.com/instafluffTV
-
 ## Instructions ##
 
 Add this as a Browser Source and replace `yourchannel` with your Twitch username!
