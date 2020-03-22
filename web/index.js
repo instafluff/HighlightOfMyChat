@@ -14,6 +14,7 @@ const channel = params.get( "channel" );
 const isTTSEnabled = params.get( "tts" ) || false;
 const ttsVoice = params.get( "voice" ) || "Brian";
 const alignBottom = params.get( "bottom" ) || false;
+const textOnScreenTime = params.get("texttimer") || 30000;
 const badgeSets = {};
 let messageId = "";
 let cooldownTimer = null;
@@ -123,7 +124,7 @@ async function highlightThisMessage( user, message, extra ) {
 
   cooldownTimer = setTimeout(
     () => elements.highlightContainer.style.visibility = "hidden",
-    30000
+    textOnScreenTime
   );
 
   if( alignBottom ) {
