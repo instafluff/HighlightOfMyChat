@@ -28,10 +28,11 @@ https://www.instafluff.tv/HighlightOfMyChat?channel=instafluff
 - Text-To-Speech `tts=true`
 - Speech Voice `voice=Amy`
 - Align to Bottom `bottom=true`
+- Time text is displayed `texttimer=30000`
 
 ```
 For example:
-https://www.instafluff.tv/HighlightOfMyChat?channel=instafluff&tts=true&voice=Amy&bottom=true
+https://www.instafluff.tv/HighlightOfMyChat?channel=instafluff&tts=true&voice=Amy&bottom=true&texttimer=10000
 ```
 
 ## Credits ##
