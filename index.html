@@ -6,7 +6,10 @@
   <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135113520-1"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
+
+    function gtag() {
+      dataLayer.push(arguments);
+    }
     gtag('js', new Date());
     gtag('config', 'UA-135113520-1');
   </script>
@@ -20,11 +23,13 @@
     <div id="highlight-container" class="translucent-bg">
       <h2><span id="badges"></span> <span id="username"></span></h2>
       <p id="text"></p>
+    </div>
   </div>
-  </div>
+
   <audio id="audio" controls="" style="visibility: hidden;">
     <source id="source" type="audio/wav">
   </audio>
+
   <script src="web/index.js"></script>
 </body>
 
