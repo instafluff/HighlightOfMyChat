@@ -170,7 +170,7 @@ if( channel ) {
     .then((data) => loadBadgeSet(data.data[0].id));
 }
 
-elements.audio.addEventListener( "ended', () => {
+elements.audio.addEventListener( "ended" , () => {
   // add bit of delay between messages
   setTimeout(playTTS, 500);
 });
