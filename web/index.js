@@ -10,12 +10,17 @@ const elements = {
 const BADGES_BASE = "https://badges.twitch.tv/v1/badges";
 const EMOTE_BASE = "https://static-cdn.jtvnw.net/emoticons/v1";
 const TTS_BASE = "https://cors-anywhere.herokuapp.com/https://lazypy.ro/tts/proxy.php";
+
+// params
 const params = new URLSearchParams( location.search );
-const channel = params.get( "channel" );
-const isTTSEnabled = params.get( "tts" ) || false;
-const ttsVoice = params.get( "voice" ) || "Brian";
-const alignBottom = params.get( "bottom" ) || false;
-const textOnScreenTime = params.get( "texttimer" ) || 30000;
+const channel = params.get("channel");
+const isTTSEnabled = params.get("tts") || false;
+const ttsVoice = params.get("voice") || "Brian";
+const subOnly = params.get("subOnly") || false;
+const charLimit = params.get("limit") || null;
+const alignBottom = params.get("bottom") || false;
+const textOnScreenTime = params.get("texttimer") || 30000;
+
 const badgeSets = {};
 let messageId = "";
 let cooldownTimer = null;
@@ -129,6 +134,14 @@ async function highlightThisMessage(user, message, extra) {
   }
 
   if (isTTSEnabled) {
+    // character limit
+    if (charLimit) {
+      // prevent substring returning empty
+      if (charLimit < message.length) {
+        message = message.substring(0, charLimit);
+      }
+    }
+
     if( typeof message != "undefined" ) {
       // add message to queue
       msgQueue.push(message.trim());
@@ -153,6 +166,11 @@ ComfyJS.onChat = (user, message, flags, self, extra) => {
 };
 
 ComfyJS.onCommand = (user, command, message, flags, extra) => {
+  // sub only logic
+  if (subOnly && !flags.subscriber) {
+    return;
+  }
+
   if (flags.highlighted) {
     highlightThisMessage(user, `!${command} ${message}`, extra);
   }
